@@ -1,6 +1,6 @@
 {
   "name": "payseal-desktop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PaySeal Desktop — Seal payslips from your desktop",
   "author": "Hector Bekaert <hello@payseal.io>",
   "main": "src/main.js",
@@ -49,23 +49,23 @@
       "createStartMenuShortcut": true,
       "shortcutName": "PaySeal"
     },
-  "mac": {
-  "target": [
-    {
-      "target": "dmg",
-      "arch": ["x64", "arm64"]
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "category": "public.app-category.business",
+      "identity": null
+    },
+    "dmg": {
+      "title": "PaySeal ${version}",
+      "contents": [
+        { "x": 130, "y": 220, "type": "file" },
+        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+      ]
     }
-  ],
-  "category": "public.app-category.business",
-  "identity": null
-},
-"dmg": {
-  "title": "PaySeal ${version}",
-  "contents": [
-    { "x": 130, "y": 220, "type": "file" },
-    { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
-  ]
-}
   },
   "dependencies": {
     "electron-store": "^8.1.0"
