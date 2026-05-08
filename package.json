@@ -49,25 +49,23 @@
       "createStartMenuShortcut": true,
       "shortcutName": "PaySeal"
     },
-    "mac": {
-      "target": [
-        {
-          "target": "dmg",
-          "arch": ["x64", "arm64"]
-        }
-      ],
-      "icon": "assets/icon.icns",
-      "category": "public.app-category.business",
-      "identity": null
-    },
-    "dmg": {
-      "title": "PaySeal ${version}",
-      "icon": "assets/icon.icns",
-      "contents": [
-        { "x": 130, "y": 220, "type": "file" },
-        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
-      ]
+  "mac": {
+  "target": [
+    {
+      "target": "dmg",
+      "arch": ["x64", "arm64"]
     }
+  ],
+  "category": "public.app-category.business",
+  "identity": null
+},
+"dmg": {
+  "title": "PaySeal ${version}",
+  "contents": [
+    { "x": 130, "y": 220, "type": "file" },
+    { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+  ]
+}
   },
   "dependencies": {
     "electron-store": "^8.1.0"
