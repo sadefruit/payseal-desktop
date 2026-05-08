@@ -49,6 +49,14 @@
       -webkit-app-region: drag;
     }
 
+    /* On Mac: leave room for traffic lights, hide custom controls */
+    body.is-mac #titlebar {
+      padding-left: 78px;
+    }
+    body.is-mac #titlebar .controls {
+      display: none;
+    }
+
     #titlebar .logo { display: flex; align-items: center; gap: 8px; }
 
     #titlebar .logo-icon {
@@ -293,6 +301,12 @@
   </style>
 </head>
 <body>
+  <script>
+    // Detect Mac and add class for platform-specific styling
+    if (navigator.platform.toLowerCase().includes('mac')) {
+      document.body.classList.add('is-mac')
+    }
+  </script>
 
   <div id="titlebar">
     <div class="logo">

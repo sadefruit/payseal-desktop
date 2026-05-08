@@ -61,6 +61,7 @@ function httpsPost(reqPath, body, extraHeaders = {}) {
 
 let mainWindow = null
 let pendingFilePath = null
+const isMac = process.platform === 'darwin'
 
 // ── Single instance lock (Windows: prevents double-launch on right-click) ────
 const gotLock = app.requestSingleInstanceLock()
@@ -96,9 +97,10 @@ function createWindow(filePath) {
     minWidth: 400,
     minHeight: 580,
     resizable: false,
-    frame: false,
+    frame: isMac ? true : false,
     backgroundColor: '#ffffff',
-    titleBarStyle: 'hidden',
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
+    trafficLightPosition: isMac ? { x: 12, y: 13 } : undefined,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
