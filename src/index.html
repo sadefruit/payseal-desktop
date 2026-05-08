@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src https://payseal.io https://fonts.googleapis.com https://fonts.gstatic.com; font-src https://fonts.gstatic.com 'self'"/>
+  <title>PaySeal</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --seal: #00C47A;
+      --seal-light: #00E090;
+      --seal-bg: rgba(0,196,122,0.08);
+      --seal-border: rgba(0,196,122,0.2);
+      --bg: #FFFFFF;
+      --bg2: #F9FAFB;
+      --bg3: #F3F4F6;
+      --text: #111827;
+      --text2: #6B7280;
+      --text3: #9CA3AF;
+      --border: #E5E7EB;
+      --red: #EF4444;
+      --red-bg: #FEF2F2;
+      --red-border: #FEE2E2;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+
+    #titlebar {
+      height: 40px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      -webkit-app-region: drag;
+    }
+
+    #titlebar .logo { display: flex; align-items: center; gap: 8px; }
+
+    #titlebar .logo-icon {
+      width: 22px; height: 22px;
+      background: var(--seal);
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    #titlebar .logo-text {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    #titlebar .controls { display: flex; gap: 6px; -webkit-app-region: no-drag; }
+
+    #titlebar .ctrl-btn {
+      width: 28px; height: 22px;
+      border: none; border-radius: 5px;
+      cursor: pointer;
+      font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg3);
+      color: var(--text2);
+      transition: background 0.15s;
+    }
+    #titlebar .ctrl-btn:hover { background: var(--border); }
+    #titlebar .ctrl-btn.close:hover { background: var(--red); color: white; }
+
+    #app { height: calc(100vh - 40px); overflow-y: auto; padding: 16px; }
+
+    .screen { display: none !important; }
+    .screen.active { display: block !important; }
+
+    #login-screen {
+      display: flex !important;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 100%;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+    #login-screen.screen:not(.active) { display: none !important; }
+
+    #login-screen h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    #login-screen p { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
+
+    #seal-screen { height: 100%; display: flex; flex-direction: column; }
+
+    #success-screen {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text2);
+      margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg2);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus { border-color: var(--seal); background: white; }
+    .field input::placeholder { color: var(--text3); }
+
+    .pw-wrap { position: relative; }
+    .pw-wrap input { padding-right: 38px; }
+    .pw-toggle {
+      position: absolute; right: 10px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: var(--text3); padding: 4px;
+      display: flex; align-items: center;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 11px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.99); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-primary { background: var(--seal); color: white; }
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+
+    .btn-ghost {
+      background: var(--bg3);
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--border); }
+
+    #drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 10px;
+    }
+    #drop-zone:hover, #drop-zone.drag-over {
+      border-color: var(--seal);
+      background: var(--seal-bg);
+    }
+    #drop-zone .icon { font-size: 28px; margin-bottom: 8px; }
+    #drop-zone p { font-size: 13px; color: var(--text2); }
+    #drop-zone small { font-size: 11px; color: var(--text3); }
+
+    #file-selected {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: var(--seal-bg);
+      border: 1px solid var(--seal-border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      margin-bottom: 10px;
+    }
+    #file-selected.show { display: flex; }
+    #file-selected .file-icon {
+      width: 32px; height: 32px;
+      background: var(--seal);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    #file-selected .file-name {
+      font-size: 13px;
+      font-weight: 500;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    #file-selected .file-clear {
+      background: none; border: none; cursor: pointer;
+      color: var(--text3); font-size: 16px; padding: 2px 4px;
+    }
+
+    .error-box {
+      background: var(--red-bg);
+      border: 1px solid var(--red-border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--red);
+      margin-bottom: 14px;
+      display: none;
+    }
+    .error-box.show { display: block; }
+
+    #user-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      margin-bottom: 12px;
+    }
+    #user-bar .user-info { font-size: 12px; }
+    #user-bar .user-name { font-weight: 600; color: var(--text); }
+    #user-bar .user-email { color: var(--text3); }
+    #user-bar .logout-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 11px; color: var(--text3); font-family: inherit;
+    }
+    #user-bar .logout-btn:hover { color: var(--red); }
+
+    .success-check {
+      width: 64px; height: 64px;
+      background: var(--seal-bg);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .seal-id-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin: 20px 0;
+      width: 100%;
+    }
+    .seal-id-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+    .seal-id-value {
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--seal);
+      word-break: break-all;
+    }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div id="titlebar">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+          <path d="M7 1L9.5 4H12L10 7L12 10H9.5L7 13L4.5 10H2L4 7L2 4H4.5L7 1Z" fill="white"/>
+        </svg>
+      </div>
+      <span class="logo-text">PaySeal</span>
+    </div>
+    <div class="controls">
+      <button class="ctrl-btn" onclick="window.payseal.minimize()">—</button>
+      <button class="ctrl-btn close" onclick="window.payseal.close()">✕</button>
+    </div>
+  </div>
+
+  <div id="app">
+
+    <div id="login-screen" class="screen active">
+      <h1>Sign in to PaySeal</h1>
+      <p>Enter your employer account credentials</p>
+
+      <div class="error-box" id="login-error"></div>
+
+      <div class="field">
+        <label>Email address</label>
+        <input type="email" id="login-email" placeholder="name@yourcompany.com" autocomplete="email"/>
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="login-password" placeholder="Password" autocomplete="current-password"/>
+          <button class="pw-toggle" id="pw-toggle" tabindex="-1">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" id="eye-icon">
+              <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.2"/>
+              <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="login-btn" style="margin-top:8px;">Sign in</button>
+
+      <p style="font-size:12px;color:var(--text3);text-align:center;margin-top:16px;">
+        Don't have an account?
+        <a href="#" onclick="window.payseal.openExternal('https://payseal.io/signup')" style="color:var(--seal);text-decoration:none;">Sign up at payseal.io</a>
+      </p>
+    </div>
+
+    <div id="seal-screen" class="screen">
+
+      <div id="user-bar">
+        <div class="user-info">
+          <div class="user-name" id="user-name">—</div>
+          <div class="user-email" id="user-email">—</div>
+        </div>
+        <button class="logout-btn" id="logout-btn">Sign out</button>
+      </div>
+
+      <div id="drop-zone">
+        <div class="icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style="color:#9CA3AF">
+            <path d="M5 5h12l6 6v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M17 5v6h6" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M14 13v6M11 16l3-3 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <p>Drop a payslip PDF here</p>
+        <small>or click to browse</small>
+      </div>
+
+      <div id="file-selected">
+        <div class="file-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 1h6l4 4v8a1 1 0 01-1 1H3a1 1 0 01-1-1V2a1 1 0 011-1z" fill="white" opacity="0.9"/>
+          </svg>
+        </div>
+        <span class="file-name" id="file-name">—</span>
+        <button class="file-clear" id="file-clear">✕</button>
+      </div>
+
+      <div class="error-box" id="seal-error"></div>
+
+      <div class="field">
+        <label>Employee email <span style="color:var(--red)">*</span></label>
+        <input type="email" id="recipient-email" placeholder="employee@company.com"/>
+      </div>
+
+      <div class="field">
+        <label>Employee name</label>
+        <input type="text" id="recipient-name" placeholder="Jean Dupont"/>
+      </div>
+
+      <button class="btn btn-primary" id="seal-btn" disabled>Seal & send</button>
+    </div>
+
+    <div id="success-screen" class="screen">
+      <div class="success-check">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <path d="M5 14L11 20L23 8" stroke="#00C47A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:8px;">Payslip sealed</h2>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:4px;">
+        Employee notified at <strong id="success-email">—</strong>
+      </p>
+      <p style="font-size:12px;color:var(--text3);">They can now share their Seal ID with any bank.</p>
+
+      <div class="seal-id-box">
+        <div class="seal-id-label">Seal ID</div>
+        <div class="seal-id-value" id="success-seal-id">—</div>
+      </div>
+
+      <div style="display:flex;gap:8px;width:100%;">
+        <button class="btn btn-ghost" id="copy-btn" style="flex:1;">Copy Seal ID</button>
+        <button class="btn btn-primary" id="seal-another-btn" style="flex:1;">Seal another</button>
+      </div>
+
+      <hr class="divider" style="width:100%"/>
+
+      <p style="font-size:11px;color:var(--text3);text-align:center;">
+        SHA-256 · Ed25519 · Secured by PaySeal
+      </p>
+    </div>
+
+  </div>
+
+  <script>
+    let currentFile = null
+    let currentUser = null
+    let authToken = null
+    let lastSealId = null
+    let lastRecipientEmail = null
+    let showingPassword = false
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'))
+      document.getElementById(id + '-screen').classList.add('active')
+    }
+
+    function showError(id, msg) {
+      const el = document.getElementById(id)
+      el.textContent = msg
+      el.classList.add('show')
+    }
+
+    function hideError(id) {
+      const el = document.getElementById(id)
+      el.classList.remove('show')
+    }
+
+    async function init() {
+      const saved = await window.payseal.store.get('session')
+      if (saved?.token) {
+        authToken = saved.token
+        const loginResult = await window.payseal.login({ email: saved.email, password: saved.password })
+        if (loginResult.ok) {
+          authToken = loginResult.token
+          currentUser = loginResult.user
+          await window.payseal.store.set('session', { ...saved, token: authToken })
+          await showSealScreen()
+          return
+        }
+        await window.payseal.store.delete('session')
+      }
+      showScreen('login')
+    }
+
+    document.getElementById('login-btn').addEventListener('click', doLogin)
+    document.getElementById('login-password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin()
+    })
+
+    async function doLogin() {
+      const email = document.getElementById('login-email').value.trim()
+      const password = document.getElementById('login-password').value
+      if (!email || !password) return
+
+      hideError('login-error')
+      const btn = document.getElementById('login-btn')
+      btn.disabled = true
+      btn.innerHTML = '<span class="spinner"></span>Signing in…'
+
+      const result = await window.payseal.login({ email, password })
+
+      btn.disabled = false
+      btn.textContent = 'Sign in'
+
+      if (!result.ok) {
+        showError('login-error', result.error || 'Invalid credentials')
+        return
+      }
+
+      authToken = result.token
+      currentUser = result.user
+
+      await window.payseal.store.set('session', { email, password, token: authToken })
+
+      await showSealScreen()
+    }
+
+    document.getElementById('pw-toggle').addEventListener('click', () => {
+      showingPassword = !showingPassword
+      const input = document.getElementById('login-password')
+      input.type = showingPassword ? 'text' : 'password'
+      document.getElementById('eye-icon').innerHTML = showingPassword
+        ? '<path d="M2 2l12 12M6.5 6.6A2 2 0 0010 9.5M4.5 4.6C2.8 5.7 1.5 7.5 1.5 8s2 4.5 6.5 4.5c1.4 0 2.6-.3 3.6-.9M7 3.6c.3 0 .7-.1 1-.1 4.5 0 6.5 4 6.5 4.5 0 .3-.3.9-.8 1.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>'
+        : '<path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.2"/>'
+    })
+
+    async function showSealScreen() {
+      document.getElementById('user-name').textContent = currentUser.name || 'Employer'
+      document.getElementById('user-email').textContent = currentUser.email || ''
+      currentFile = null
+      resetFileUI()
+      hideError('seal-error')
+      document.getElementById('recipient-email').value = ''
+      document.getElementById('recipient-name').value = ''
+      showScreen('seal')
+      document.getElementById('app').scrollTop = 0
+      // Load file if app was opened via right-click on a PDF
+      await loadPendingFileIfAny()
+    }
+
+    const dropZone = document.getElementById('drop-zone')
+
+    dropZone.addEventListener('click', async () => {
+      const result = await window.payseal.openFileDialog()
+      if (result.ok) setFile(result)
+    })
+
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault()
+      dropZone.classList.add('drag-over')
+    })
+
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'))
+
+    dropZone.addEventListener('drop', async e => {
+      e.preventDefault()
+      dropZone.classList.remove('drag-over')
+      const file = e.dataTransfer.files[0]
+      if (!file || !file.name.endsWith('.pdf')) return
+      const filePath = file.path
+      if (filePath) {
+        const result = await window.payseal.readFile(filePath)
+        if (result.ok) setFile({ base64: result.base64, fileName: result.fileName })
+      }
+    })
+
+    document.getElementById('file-clear').addEventListener('click', resetFileUI)
+
+    function setFile({ base64, fileName, filePath }) {
+      currentFile = { base64, fileName, filePath }
+      document.getElementById('drop-zone').style.display = 'none'
+      document.getElementById('file-selected').classList.add('show')
+      document.getElementById('file-name').textContent = fileName
+      updateSealBtn()
+    }
+
+    function resetFileUI() {
+      currentFile = null
+      document.getElementById('drop-zone').style.display = 'block'
+      document.getElementById('file-selected').classList.remove('show')
+      document.getElementById('file-name').textContent = '—'
+      updateSealBtn()
+    }
+
+    // Pull pending file (cold-start: app opened via right-click)
+    async function loadPendingFileIfAny() {
+      const filePath = await window.payseal.getPendingFile()
+      if (!filePath) return
+      const result = await window.payseal.readFile(filePath)
+      if (result.ok) {
+        setFile({ base64: result.base64, fileName: result.fileName, filePath })
+      }
+    }
+
+    // Listen for file opened via right-click (warm-start: app already running)
+    window.payseal.onFileOpened(async (filePath) => {
+      if (!filePath) return
+      const result = await window.payseal.readFile(filePath)
+      if (result.ok) {
+        setFile({ base64: result.base64, fileName: result.fileName, filePath })
+        if (currentUser) showScreen('seal')
+      }
+    })
+
+    function updateSealBtn() {
+      const email = document.getElementById('recipient-email').value.trim()
+      const hasFile = !!currentFile
+      const hasEmail = email.includes('@')
+      document.getElementById('seal-btn').disabled = !(hasFile && hasEmail)
+    }
+
+    document.getElementById('recipient-email').addEventListener('input', updateSealBtn)
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await window.payseal.store.delete('session')
+      currentUser = null
+      currentFile = null
+      document.getElementById('login-email').value = ''
+      document.getElementById('login-password').value = ''
+      showScreen('login')
+    })
+
+    document.getElementById('seal-btn').addEventListener('click', doSeal)
+
+    async function doSeal() {
+      if (!currentFile) return
+      const recipientEmail = document.getElementById('recipient-email').value.trim()
+      const recipientName = document.getElementById('recipient-name').value.trim()
+      if (!recipientEmail) return
+
+      hideError('seal-error')
+      const btn = document.getElementById('seal-btn')
+      btn.disabled = true
+      btn.innerHTML = '<span class="spinner"></span>Sealing…'
+
+      const result = await window.payseal.seal({
+        fileBase64: currentFile.base64,
+        fileName: currentFile.fileName,
+        recipientEmail,
+        recipientName,
+        token: authToken,
+      })
+
+      btn.disabled = false
+      btn.textContent = 'Seal & send'
+
+      if (!result.ok) {
+        showError('seal-error', result.error || 'Sealing failed — please try again')
+        return
+      }
+
+      lastSealId = result.sealId
+      lastRecipientEmail = recipientEmail
+
+      document.getElementById('success-seal-id').textContent = result.sealId
+      document.getElementById('success-email').textContent = recipientEmail
+
+      document.getElementById('recipient-email').value = ''
+      document.getElementById('recipient-name').value = ''
+      resetFileUI()
+
+      showScreen('success')
+    }
+
+    document.getElementById('copy-btn').addEventListener('click', async () => {
+      if (!lastSealId) return
+      await navigator.clipboard.writeText(lastSealId)
+      const btn = document.getElementById('copy-btn')
+      btn.textContent = 'Copied!'
+      setTimeout(() => { btn.textContent = 'Copy Seal ID' }, 2000)
+    })
+
+    document.getElementById('seal-another-btn').addEventListener('click', () => {
+      showSealScreen()
+    })
+
+    init()
+  </script>
+</body>
+</html>
